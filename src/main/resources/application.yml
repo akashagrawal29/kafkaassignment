@@ -23,7 +23,7 @@ kafka-config:
   schema-registry-url-key: schema.registry.url
   schema-registry-url: http://localhost:8081
   topic-name: auth-topic
-  num-of-partitions: 2
+  num-of-partitions: 1
   replication-factor: 1
 
 kafka-producer-config:

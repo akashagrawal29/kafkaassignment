@@ -22,7 +22,7 @@ public class KafkaService {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaService.class);
 
     private final KafkaConfig kafkaConfig;
-    private final DemoKafkaProducer kafkaProducer;
+    private final KafkaProducer kafkaProducer;
     private final Parser parser;
 
     public KafkaService(KafkaConfig kafkaConfig, DemoKafkaProducer kafkaProducer, Parser parser) {
@@ -52,7 +52,7 @@ public class KafkaService {
             String key = li.get("subscriber").get("mem_ID").asText();
             String message = li.toString();
             LOG.info("sending to kafkatopic: {} with key: {} and message: {}", topic, key, message);
-            kafkaProducer.send(topic, key, li.asText());
+            kafkaProducer.send(topic, key, message);
         }
     }
 }

@@ -28,8 +28,6 @@ public class KafkaProducerConfig<K extends Serializable, V extends Serializable>
     @Bean
     public Map<String, Object> producerConfig(){
         Map<String, Object> props = new HashMap<>();
-        LOG.info("kafkaConfigData: {}", kafkaConfigData);
-        LOG.info("kafkaProducerConfigData: {}", kafkaProducerConfigData);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfigData.getBootstrapServers());
         props.put(kafkaConfigData.getSchemaRegistryUrlKey(), kafkaConfigData.getSchemaRegistryUrl());
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, kafkaProducerConfigData.getKeySerializerClass());
@@ -47,7 +45,7 @@ public class KafkaProducerConfig<K extends Serializable, V extends Serializable>
         return new DefaultKafkaProducerFactory<>(producerConfig());
     }
 
-    @Bean
+    @Bean(name = "customKafkaTemplate")
     public KafkaTemplate<K, V> kafkaTemplate(){
         return new KafkaTemplate<>(producerFactory());
     }

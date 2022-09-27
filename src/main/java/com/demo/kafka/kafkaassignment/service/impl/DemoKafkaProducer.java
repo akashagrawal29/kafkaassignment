@@ -5,6 +5,7 @@ import com.demo.kafka.kafkaassignment.service.KafkaProducer;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import javax.annotation.PreDestroy;
 @Service
 public class DemoKafkaProducer implements KafkaProducer<String, String> {
     private static final Logger LOG = LoggerFactory.getLogger(DemoKafkaProducer.class);
+
+    @Qualifier("customKafkaTemplate")
     private KafkaTemplate<String, String> kafkaTemplate;
 
     public DemoKafkaProducer(KafkaTemplate<String, String> kafkaTemplate) {
