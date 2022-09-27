@@ -1,0 +1,36 @@
+
+logging:
+  level:
+    root: INFO
+spring:
+  application:
+    name: kafka-demo
+# Database Config
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        ddl-auto: update
+    show-sql: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/kafkaDemo
+    username: root
+    password: Akash@12345
+
+
+kafka-config:
+  bootstrap-servers: localhost:9092
+  schema-registry-url-key: schema.registry.url
+  schema-registry-url: http://localhost:8081
+  topic-name: auth-topic
+  num-of-partitions: 2
+  replication-factor: 1
+
+kafka-producer-config:
+  key-serializer-class: org.apache.kafka.common.serialization.StringSerializer
+  value-serializer-class: org.apache.kafka.common.serialization.StringSerializer
+  compression-type: snappy
+  acks: all
+  batch-size: 16384
+  linger-ms: 5
+  request-timeout-ms: 60000
