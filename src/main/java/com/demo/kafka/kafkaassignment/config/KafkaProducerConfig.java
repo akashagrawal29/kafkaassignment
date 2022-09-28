@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@EnableKafka
 public class KafkaProducerConfig<K extends Serializable, V extends Serializable> {
 
     private static final Logger LOG = LoggerFactory.getLogger(KafkaProducerConfig.class);
@@ -45,7 +47,7 @@ public class KafkaProducerConfig<K extends Serializable, V extends Serializable>
         return new DefaultKafkaProducerFactory<>(producerConfig());
     }
 
-    @Bean(name = "customKafkaTemplate")
+    @Bean("customKafkaTemplate")
     public KafkaTemplate<K, V> kafkaTemplate(){
         return new KafkaTemplate<>(producerFactory());
     }

@@ -50,7 +50,7 @@ public class KafkaService {
         for (JsonNode li : list) {
             String topic = kafkaConfig.getTopicName();
             String key = li.get("subscriber").get("mem_ID").asText();
-            String message = li.toString();
+            String message = li.toString().replace("mycase", "case");
             LOG.info("sending to kafkatopic: {} with key: {} and message: {}", topic, key, message);
             kafkaProducer.send(topic, key, message);
         }

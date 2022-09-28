@@ -21,6 +21,7 @@
 		<spring-kafka.version>2.9.0</spring-kafka.version>
 		<mysql-connector-java.version>8.0.30</mysql-connector-java.version>
 		<jackson-databind.version>2.14.0-rc1</jackson-databind.version>
+		<kafka-streams.version>3.1.2</kafka-streams.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -75,7 +76,12 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>${jackson-databind.version}</version>
 		</dependency>
-
+		<!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka-streams -->
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-streams</artifactId>
+			<version>${kafka-streams.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -34,3 +34,12 @@ kafka-producer-config:
   batch-size: 16384
   linger-ms: 5
   request-timeout-ms: 60000
+
+kafka-streams-config:
+  application-id: kafka-demo
+  input-topic-name: auth-topic
+  output-topic-names:
+    - subscriber
+    - patient
+    - case
+    - service

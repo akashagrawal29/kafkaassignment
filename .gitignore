@@ -34,3 +34,5 @@ build/
 /mvnw
 /mvnw.cmd
 /.mvn/
+/src/main/java/com/demo/kafka/kafkaassignment/dummy/
+/kafkaassignment/
