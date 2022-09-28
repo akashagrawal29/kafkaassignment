@@ -6,6 +6,7 @@ import com.demo.kafka.kafkaassignment.runner.StreamRunner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -19,8 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -30,14 +29,10 @@ public class KafkaStreamsRunner implements StreamRunner {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaStreamsRunner.class);
     private final KafkaStreamsConfigData kafkaStreamsConfigData;
     private final KafkaConfig kafkaConfig;
-    private List<KafkaStreams> kafkaStreamsList;
-    private List<CountDownLatch> latchList;
 
     public KafkaStreamsRunner(KafkaStreamsConfigData kafkaStreamsConfigData, KafkaConfig kafkaConfig) {
         this.kafkaStreamsConfigData = kafkaStreamsConfigData;
         this.kafkaConfig = kafkaConfig;
-        kafkaStreamsList = new ArrayList<>();
-        latchList = new ArrayList<>();
     }
 
     public Topology buildTopology() {
@@ -54,15 +49,17 @@ public class KafkaStreamsRunner implements StreamRunner {
     private ValueMapper<String, String> valueMapper(String outputTopicName) {
         ObjectMapper mapper = new ObjectMapper();
         return (val -> {
-            LOG.info("val is{}", val);
-            JsonNode json = null;
+            LOG.debug("val is {}", val);
+            JsonNode json;
             try {
                 json = mapper.readTree(val);
             } catch (JsonProcessingException e) {
                 LOG.warn("Exception while converting to JsonNode: ", e);
                 return null;
             }
-            String str = json.get(outputTopicName).toString();
+            JsonNode node = json.get(outputTopicName);
+            ObjectNode obj = ((ObjectNode)node).put("source", "KSTREAMS");
+            String str = obj.toString();
             LOG.info("For outputTopicName {} String is : {}", outputTopicName, str);
             return str;
         });
@@ -70,10 +67,9 @@ public class KafkaStreamsRunner implements StreamRunner {
 
     @Override
     public void start() {
-        try {
+        Properties properties = streamsConfiguration();
+        try(KafkaStreams kafkaStreams = new KafkaStreams(buildTopology(), properties)) {
             LOG.debug("Calling kafkaStreams start");
-            Properties properties = streamsConfiguration();
-            KafkaStreams kafkaStreams = new KafkaStreams(buildTopology(), properties);
             CountDownLatch latch = new CountDownLatch(1);
             Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
                 @Override
@@ -84,24 +80,14 @@ public class KafkaStreamsRunner implements StreamRunner {
                 }
             });
             kafkaStreams.start();
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                LOG.warn("Exception during await: ", e);
-                Thread.currentThread().interrupt();
-            }
+            latch.await();
+        } catch (InterruptedException e) {
+            LOG.warn("Exception during await: ", e);
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             LOG.warn("Exception in kafka streams: ", e);
         }
     }
-
-//    @PreDestroy
-//    public void close() {
-//        if (kafkaStreams != null) {
-//
-//            LOG.info("Kafka streaming closed!");
-//        }
-//    }
 
     public Properties streamsConfiguration() {
         Properties streamsConfiguration = new Properties();
