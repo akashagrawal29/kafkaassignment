@@ -9,8 +9,9 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        ddl-auto: update
+        dialect: org.hibernate.dialect.MySQL55Dialect
+    hibernate:
+      ddl-auto: 'create-drop'
     show-sql: true
   datasource:
     url: jdbc:mysql://localhost:3306/kafkaDemo
@@ -41,5 +42,5 @@ kafka-streams-config:
   output-topic-names:
     - subscriber
     - patient
-    - case
+    - mycase
     - service

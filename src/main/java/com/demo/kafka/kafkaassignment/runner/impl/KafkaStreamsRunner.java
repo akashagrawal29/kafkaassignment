@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -20,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -33,6 +37,18 @@ public class KafkaStreamsRunner implements StreamRunner {
     public KafkaStreamsRunner(KafkaStreamsConfigData kafkaStreamsConfigData, KafkaConfig kafkaConfig) {
         this.kafkaStreamsConfigData = kafkaStreamsConfigData;
         this.kafkaConfig = kafkaConfig;
+    }
+
+    public void createTopics(Properties allProps) {
+        AdminClient client = AdminClient.create(allProps);
+
+        List<NewTopic> topics = new ArrayList<>();
+        topics.add(new NewTopic(kafkaStreamsConfigData.getInputTopicName(), 1, (short) 1));
+        for(String outputTopicName : kafkaStreamsConfigData.getOutputTopicNames()){
+            topics.add(new NewTopic(outputTopicName,1, (short) 1));
+        }
+        client.createTopics(topics);
+        client.close();
     }
 
     public Topology buildTopology() {
@@ -58,7 +74,7 @@ public class KafkaStreamsRunner implements StreamRunner {
                 return null;
             }
             JsonNode node = json.get(outputTopicName);
-            ObjectNode obj = ((ObjectNode)node).put("source", "KSTREAMS");
+            ObjectNode obj = ((ObjectNode)node).put("mysource", "KSTREAMS");
             String str = obj.toString();
             LOG.info("For outputTopicName {} String is : {}", outputTopicName, str);
             return str;
@@ -68,6 +84,7 @@ public class KafkaStreamsRunner implements StreamRunner {
     @Override
     public void start() {
         Properties properties = streamsConfiguration();
+//        createTopics(properties);
         try(KafkaStreams kafkaStreams = new KafkaStreams(buildTopology(), properties)) {
             LOG.debug("Calling kafkaStreams start");
             CountDownLatch latch = new CountDownLatch(1);
@@ -97,7 +114,6 @@ public class KafkaStreamsRunner implements StreamRunner {
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         streamsConfiguration.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, "true");
-
         return streamsConfiguration;
     }
 }
