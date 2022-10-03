@@ -5,11 +5,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-public class Output {
+public class Output implements Serializable {
     private Subscriber subscriber;
     private Patient patient;
     private Case mycase;

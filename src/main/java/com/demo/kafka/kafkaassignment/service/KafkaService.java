@@ -4,7 +4,6 @@ import com.demo.kafka.kafkaassignment.config.KafkaConfig;
 import com.demo.kafka.kafkaassignment.dto.Output;
 import com.demo.kafka.kafkaassignment.parser.Parser;
 import com.demo.kafka.kafkaassignment.service.impl.DemoKafkaProducer;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ public class KafkaService {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaService.class);
 
     private final KafkaConfig kafkaConfig;
-    private final KafkaProducer<String, String> kafkaProducer;
+    private final KafkaProducer<String, Output> kafkaProducer;
     private final Parser parser;
 
     public KafkaService(KafkaConfig kafkaConfig, DemoKafkaProducer kafkaProducer, Parser parser) {
@@ -35,7 +34,7 @@ public class KafkaService {
         try (Stream<Path> stream = Files.list(Paths.get(DIR))) {
             stream.forEach(file -> {
                 if (!Files.isDirectory(file)) {
-                    List<JsonNode> list = parser.parse(file);
+                    List<Output> list = parser.parse(file);
                     sendDataTokafka(list);
                     LOG.info("List is: {}", list);
                 }
@@ -46,12 +45,11 @@ public class KafkaService {
         return null;
     }
 
-    private void sendDataTokafka(List<JsonNode> list) {
-        for (JsonNode li : list) {
+    private void sendDataTokafka(List<Output> list) {
+        for (Output message : list) {
             String topic = kafkaConfig.getTopicName();
-            String key = li.get("subscriber").get("case_NUMBER").asText();
-            String message = li.toString();
-            LOG.info("sending to kafkatopic: {} with key: {} and message: {}", topic, key, message);
+            String key = message.getSubscriber().getCASE_NUMBER();
+            LOG.info("Sending to kafkatopic: {} with key: {} and message: {}", topic, key, message);
             kafkaProducer.send(topic, key, message);
         }
     }

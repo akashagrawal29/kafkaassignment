@@ -23,7 +23,7 @@ public class TextParser implements Parser {
     private static final Logger LOG = LoggerFactory.getLogger(TextParser.class);
 
     @Override
-    public List<JsonNode> parse(Path file) {
+    public List<Output> parse(Path file) {
         LOG.info("Parsing file: {}", file.getFileName());
         List<Output> list = new ArrayList<>();
         try (BufferedReader reader = Files.newBufferedReader(file)) {
@@ -55,7 +55,7 @@ public class TextParser implements Parser {
         } catch (IOException e) {
             LOG.warn("Exception while reading file: ", e);
         }
-        return convertOutputToJson(list);
+        return list;
     }
 
     private List<JsonNode> convertOutputToJson(List<Output> list) {

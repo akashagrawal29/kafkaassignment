@@ -29,8 +29,7 @@ kafka-config:
 
 kafka-producer-config:
   key-serializer-class: org.apache.kafka.common.serialization.StringSerializer
-  value-serializer-class: org.apache.kafka.common.serialization.StringSerializer
-  compression-type: snappy
+  value-serializer-class: io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer
   acks: all
   batch-size: 16384
   linger-ms: 5

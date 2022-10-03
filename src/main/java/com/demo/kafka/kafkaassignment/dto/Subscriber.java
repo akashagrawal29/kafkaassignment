@@ -1,5 +1,7 @@
 package com.demo.kafka.kafkaassignment.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,4 +21,5 @@ public class Subscriber {
     String MEM_ADD_2;
     String MEM_CITY;
     String MEM_PIN;
+
 }

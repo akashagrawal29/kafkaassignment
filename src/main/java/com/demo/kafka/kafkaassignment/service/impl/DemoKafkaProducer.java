@@ -1,6 +1,7 @@
 package com.demo.kafka.kafkaassignment.service.impl;
 
 
+import com.demo.kafka.kafkaassignment.dto.Output;
 import com.demo.kafka.kafkaassignment.service.KafkaProducer;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
@@ -16,18 +17,18 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 import javax.annotation.PreDestroy;
 
 @Service
-public class DemoKafkaProducer implements KafkaProducer<String, String> {
+public class DemoKafkaProducer implements KafkaProducer<String, Output> {
     private static final Logger LOG = LoggerFactory.getLogger(DemoKafkaProducer.class);
 
     @Autowired
     @Qualifier("customKafkaTemplate")
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, Output> kafkaTemplate;
 
     @Override
-    public void send(String topicName, String key, String message) {
+    public void send(String topicName, String key, Output message) {
         LOG.debug("Sending message='{}' to topic={}", message, topicName);
         LOG.info("kafkaTemplate: {}",kafkaTemplate);
-        ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topicName, key, message);
+        ListenableFuture<SendResult<String, Output>> listenableFuture = kafkaTemplate.send(topicName, key, message);
         addCallBack(topicName, message, listenableFuture);
     }
 
@@ -39,15 +40,15 @@ public class DemoKafkaProducer implements KafkaProducer<String, String> {
         }
     }
 
-    private void addCallBack(String topicName, String message, ListenableFuture<SendResult<String, String>> listenableFuture) {
-        listenableFuture.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+    private void addCallBack(String topicName, Output message, ListenableFuture<SendResult<String, Output>> listenableFuture) {
+        listenableFuture.addCallback(new ListenableFutureCallback<SendResult<String, Output>>() {
             @Override
             public void onFailure(Throwable ex) {
                 LOG.error("Error while sending message '{}' to topic={}", message, topicName);
             }
 
             @Override
-            public void onSuccess(SendResult<String, String> result) {
+            public void onSuccess(SendResult<String, Output> result) {
                 RecordMetadata metaData = result.getRecordMetadata();
                 LOG.info("Received new metadata. Topic={}, partition={}, offset={}, timestamp={}, at time={}",
                         metaData.topic(), metaData.partition(), metaData.offset(), metaData.timestamp(), System.nanoTime());
