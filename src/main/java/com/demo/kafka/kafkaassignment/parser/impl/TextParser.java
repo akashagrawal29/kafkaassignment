@@ -18,17 +18,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class TextParser implements Parser {
+public class TextParser implements Parser<OutputAvroModel> {
 
     private static final Logger LOG = LoggerFactory.getLogger(TextParser.class);
 
     @Override
-    public List<JsonNode> parse(Path file) {
+    public List<OutputAvroModel> parse(Path file) {
         LOG.info("Parsing file: {}", file.getFileName());
-        List<Output> list = new ArrayList<>();
+        List<OutputAvroModel> list = new ArrayList<>();
         try (BufferedReader reader = Files.newBufferedReader(file)) {
             String st;
-            Output output = new Output();
+            OutputAvroModel.Builder output = OutputAvroModel.newBuilder();
             int count = 0;
             while ((st = reader.readLine()) != null) {
                 String mapped = "";
@@ -40,8 +40,8 @@ public class TextParser implements Parser {
                     if (count == 2) {
                         count = 1;
                         LOG.debug("Output is: {}", output);
-                        list.add(output);
-                        output = new Output();
+                        list.add(output.build());
+                        output = OutputAvroModel.newBuilder();
                     }
                     output.setSubscriber(getSubscriber(st));
                 } else if (mapped.equals(Mapping.CAS.displayName())) {
@@ -55,10 +55,10 @@ public class TextParser implements Parser {
         } catch (IOException e) {
             LOG.warn("Exception while reading file: ", e);
         }
-        return convertOutputToJson(list);
+        return list;
     }
 
-    private List<JsonNode> convertOutputToJson(List<Output> list) {
+    private List<JsonNode> convertOutputToJson(List<OutputAvroModel> list) {
         ObjectMapper objectMapper = new ObjectMapper();
         return list.parallelStream()
                 .map(op -> objectMapper.convertValue(op, JsonNode.class))
@@ -67,54 +67,58 @@ public class TextParser implements Parser {
 
     private Subscriber getSubscriber(String st) {
         Subscriber subscriber = new Subscriber();
-        subscriber.setCASE_NUMBER(st.substring(3, 18).trim());
-        subscriber.setMEM_ID(st.substring(19, 34).trim());
-        subscriber.setMEM_FIRST_NAME(st.substring(35, 50).trim());
-        subscriber.setMEM_MIDDLE_NAME(st.substring(51, 66).trim());
-        subscriber.setMEM_LAST_NAME(st.substring(67, 82).trim());
-        subscriber.setMEM_ADD_1(st.substring(83, 98).trim());
-        subscriber.setMEM_ADD_2(st.substring(99, 114).trim());
-        subscriber.setMEM_CITY(st.substring(115, 130).trim());
-        subscriber.setMEM_PIN(st.substring(131, 146).trim());
+        subscriber.setCaseNUMBER(st.substring(3, 18).trim());
+        subscriber.setMemID(st.substring(19, 34).trim());
+        subscriber.setMemFIRSTNAME(st.substring(35, 50).trim());
+        subscriber.setMemMIDDLENAME(st.substring(51, 66).trim());
+        subscriber.setMemLASTNAME(st.substring(67, 82).trim());
+        subscriber.setMemADD1(st.substring(83, 98).trim());
+        subscriber.setMemADD2(st.substring(99, 114).trim());
+        subscriber.setMemCITY(st.substring(115, 130).trim());
+        subscriber.setMemPIN(st.substring(131, 146).trim());
+        subscriber.setMysource("");
         return subscriber;
     }
 
-    private Case getCase(String st) {
-        Case myCase = new Case();
-        myCase.setCASE_NUMBER(st.substring(3, 18).trim());
-        myCase.setCASE_TYPE(st.substring(19, 34).trim());
-        myCase.setCASE_CODE(st.substring(35, 50).trim());
-        myCase.setCASE_START_DATE(st.substring(51, 66).trim());
-        myCase.setCASE_END_DATE(st.substring(67, 82).trim());
-        myCase.setCASE_AUTH_TYPE(st.substring(83, 98).trim());
-        myCase.setCASE_STATUS(st.substring(99, 108).trim());
+    private Mycase getCase(String st) {
+        Mycase myCase = new Mycase();
+        myCase.setCaseNUMBER(st.substring(3, 18).trim());
+        myCase.setCaseTYPE(st.substring(19, 34).trim());
+        myCase.setCaseCODE(st.substring(35, 50).trim());
+        myCase.setCaseSTARTDATE(st.substring(51, 66).trim());
+        myCase.setCaseENDDATE(st.substring(67, 82).trim());
+        myCase.setCaseAUTHTYPE(st.substring(83, 98).trim());
+        myCase.setCaseSTATUS(st.substring(99, 108).trim());
+        myCase.setMysource("");
         return myCase;
     }
 
     private Patient getPatient(String st) {
         Patient patient = new Patient();
-        patient.setCASE_NUMBER(st.substring(3, 18).trim());
-        patient.setPAT_ID(st.substring(19, 34).trim());
-        patient.setPAT_FIRST_NAME(st.substring(35, 50).trim());
-        patient.setPAT_MIDDLE_NAME(st.substring(51, 66).trim());
-        patient.setPAT_LAST_NAME(st.substring(67, 82).trim());
-        patient.setPAT_SEX(st.substring(83, 98).trim());
-        patient.setPAT_DOB(st.substring(99, 114).trim());
-        patient.setPAT_PLANE_TYPE(st.substring(115, 130).trim());
-        patient.setPAT_PLAN_NAME(st.substring(131, 135).trim());
+        patient.setCaseNUMBER(st.substring(3, 18).trim());
+        patient.setPatID(st.substring(19, 34).trim());
+        patient.setPatFIRSTNAME(st.substring(35, 50).trim());
+        patient.setPatMIDDLENAME(st.substring(51, 66).trim());
+        patient.setPatLASTNAME(st.substring(67, 82).trim());
+        patient.setPatSEX(st.substring(83, 98).trim());
+        patient.setPatDOB(st.substring(99, 114).trim());
+        patient.setPatPLANETYPE(st.substring(115, 130).trim());
+        patient.setPatPLANNAME(st.substring(131, 135).trim());
+        patient.setMysource("");
         return patient;
     }
 
     private Service getService(String st) {
         Service service = new Service();
-        service.setCASE_NUMBER(st.substring(3, 18).trim());
-        service.setSVC_ID(st.substring(19, 34).trim());
-        service.setSVC_TYPE(st.substring(35, 50).trim());
-        service.setSVC_CODE(st.substring(51, 66).trim());
-        service.setSVC_FAC_ID(st.substring(67, 82).trim());
-        service.setSVC_FAC_NAME(st.substring(83, 98).trim());
-        service.setSVC_PHY_ID(st.substring(99, 114).trim());
-        service.setSVC_PHY_NAME(st.substring(115, 130).trim());
+        service.setCaseNUMBER(st.substring(3, 18).trim());
+        service.setSvcID(st.substring(19, 34).trim());
+        service.setSvcTYPE(st.substring(35, 50).trim());
+        service.setSvcCODE(st.substring(51, 66).trim());
+        service.setSvcFACID(st.substring(67, 82).trim());
+        service.setSvcFACNAME(st.substring(83, 98).trim());
+        service.setSvcPHYID(st.substring(99, 114).trim());
+        service.setSvcPHYNAME(st.substring(115, 130).trim());
+        service.setMysource("");
         return service;
     }
 }

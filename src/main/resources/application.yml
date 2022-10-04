@@ -9,8 +9,9 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        ddl-auto: update
+        dialect: org.hibernate.dialect.MySQL55Dialect
+    hibernate:
+      ddl-auto: 'create-drop'
     show-sql: true
   datasource:
     url: jdbc:mysql://localhost:3306/kafkaDemo
@@ -28,12 +29,15 @@ kafka-config:
 
 kafka-producer-config:
   key-serializer-class: org.apache.kafka.common.serialization.StringSerializer
-  value-serializer-class: org.apache.kafka.common.serialization.StringSerializer
-  compression-type: snappy
+  value-serializer-class: io.confluent.kafka.serializers.KafkaAvroSerializer
   acks: all
   batch-size: 16384
   linger-ms: 5
   request-timeout-ms: 60000
+
+kafka-consumer-config:
+  key-deserializer-class: org.apache.kafka.common.serialization.StringDeserializer
+  value-deserializer-class: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
 
 kafka-streams-config:
   application-id: kafka-demo
@@ -41,5 +45,5 @@ kafka-streams-config:
   output-topic-names:
     - subscriber
     - patient
-    - case
+    - mycase
     - service

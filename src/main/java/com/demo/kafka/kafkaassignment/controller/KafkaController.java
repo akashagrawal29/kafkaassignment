@@ -1,6 +1,6 @@
 package com.demo.kafka.kafkaassignment.controller;
 
-import com.demo.kafka.kafkaassignment.dto.Output;
+import com.demo.kafka.kafkaassignment.dto.OutputAvroModel;
 import com.demo.kafka.kafkaassignment.service.KafkaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +12,7 @@ public class KafkaController {
     @Autowired
     KafkaService kafkaService;
     @GetMapping("/api/readFile")
-    public Output readFileAndUpdate() {
+    public OutputAvroModel readFileAndUpdate() {
         return kafkaService.readFileAndUpdate();
     }
 }

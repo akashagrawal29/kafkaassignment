@@ -11,7 +11,6 @@ public class KafkaProducerConfigData {
 
     private String keySerializerClass;
     private String valueSerializerClass;
-    private String compressionType;
     private String acks;
     private int batchSize;
     private int lingerMs;
