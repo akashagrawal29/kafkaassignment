@@ -29,7 +29,7 @@ kafka-config:
 
 kafka-producer-config:
   key-serializer-class: org.apache.kafka.common.serialization.StringSerializer
-  value-serializer-class: io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer
+  value-serializer-class: io.confluent.kafka.serializers.KafkaAvroSerializer
   acks: all
   batch-size: 16384
   linger-ms: 5
@@ -38,6 +38,7 @@ kafka-producer-config:
 kafka-consumer-config:
   key-deserializer-class: org.apache.kafka.common.serialization.StringDeserializer
   value-deserializer-class: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
+
 kafka-streams-config:
   application-id: kafka-demo
   input-topic-name: auth-topic

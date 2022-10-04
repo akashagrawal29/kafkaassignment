@@ -2,22 +2,11 @@ package com.demo.kafka.kafkaassignment.runner.impl;
 
 import com.demo.kafka.kafkaassignment.config.KafkaConfig;
 import com.demo.kafka.kafkaassignment.config.KafkaStreamsConfigData;
-import com.demo.kafka.kafkaassignment.models.Case;
-import com.demo.kafka.kafkaassignment.models.Patient;
-import com.demo.kafka.kafkaassignment.models.Service;
-import com.demo.kafka.kafkaassignment.models.Subscriber;
+import com.demo.kafka.kafkaassignment.dto.*;
 import com.demo.kafka.kafkaassignment.runner.StreamRunner;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
-import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -25,8 +14,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.ValueMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -40,77 +29,40 @@ public class KafkaStreamsRunner implements StreamRunner {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaStreamsRunner.class);
     private final KafkaStreamsConfigData kafkaStreamsConfigData;
     private final KafkaConfig kafkaConfig;
-    private final SchemaRegistryClient schemaRegistryClient;
     private final Properties streamsConfiguration;
-    private final Map<String, Object> serdeConfig;
+    private Map<String, String> serdeConfig;
     private static final String SUBSCRIBER = "subscriber";
     private static final String MYCASE = "mycase";
     private static final String PATIENT = "patient";
     private static final String SERVICE = "service";
-    private static final String LOG_TYPE = "node is {}";
+    private static final String SOURCE_VALUE_BY_CODE = "KSTREAMS";
+    private Serde<OutputAvroModel> outputSerde;
+
     public KafkaStreamsRunner(KafkaStreamsConfigData kafkaStreamsConfigData, KafkaConfig kafkaConfig) {
         this.kafkaStreamsConfigData = kafkaStreamsConfigData;
         this.kafkaConfig = kafkaConfig;
-        serdeConfig = new HashMap<>();
         streamsConfiguration = new Properties();
-        schemaRegistryClient = new CachedSchemaRegistryClient(kafkaConfig.getSchemaRegistryUrl(), 10);
         putSerdeConfigs();
+        createSerde();
         streamsConfiguration();
     }
 
-    public void createTopics(Properties allProps) {
-        AdminClient client = AdminClient.create(allProps);
-
-        List<NewTopic> topics = new ArrayList<>();
-        topics.add(new NewTopic(kafkaStreamsConfigData.getInputTopicName(), 1, (short) 1));
-        for (String outputTopicName : kafkaStreamsConfigData.getOutputTopicNames()) {
-            topics.add(new NewTopic(outputTopicName, 1, (short) 1));
-        }
-        client.createTopics(topics);
-        client.close();
+    public void putSerdeConfigs() {
+        serdeConfig = new HashMap<>();
+        serdeConfig.put(kafkaConfig.getSchemaRegistryUrlKey(), kafkaConfig.getSchemaRegistryUrl());
     }
 
-    public Topology buildTopology() {
-        final StreamsBuilder builder = new StreamsBuilder();
-        final String inputTopic = kafkaConfig.getTopicName();
-        var kStream = builder.stream(inputTopic, Consumed.with(Serdes.String(), Serdes.String()));
-        Serde<Subscriber> subscriberSerde = new KafkaJsonSchemaSerde<>(schemaRegistryClient, Subscriber.class);
-        subscriberSerde.configure(serdeConfig, false);
-        Serde<Case> caseSerde = new KafkaJsonSchemaSerde<>(schemaRegistryClient, Case.class);
-        caseSerde.configure(serdeConfig, false);
-        Serde<Patient> patientSerde = new KafkaJsonSchemaSerde<>(schemaRegistryClient, Patient.class);
-        patientSerde.configure(serdeConfig, false);
-        Serde<Service> serviceSerde = new KafkaJsonSchemaSerde<>(schemaRegistryClient, Service.class);
-        serviceSerde.configure(serdeConfig, false);
-        kStream.mapValues(valueMapper(SUBSCRIBER)).mapValues(subscriberValueMapper()).to(
-                SUBSCRIBER, Produced.with(Serdes.String(), subscriberSerde));
-        kStream.mapValues(valueMapper(MYCASE)).mapValues(myCaseValueMapper()).to(
-                MYCASE, Produced.with(Serdes.String(), caseSerde));
-        kStream.mapValues(valueMapper(PATIENT)).mapValues(patientValueMapper()).to(
-                PATIENT, Produced.with(Serdes.String(), patientSerde));
-        kStream.mapValues(valueMapper(SERVICE)).mapValues(serviceValueMapper()).to(
-                SERVICE, Produced.with(Serdes.String(), serviceSerde));
-        return builder.build();
+    private void createSerde() {
+        outputSerde = new SpecificAvroSerde<>();
+        outputSerde.configure(serdeConfig, false);
     }
 
-    private ValueMapper<String, ObjectNode> valueMapper(String outputTopicName) {
-        final ObjectMapper mapper = new ObjectMapper();
-        return (val -> {
-            LOG.info("val is {}", val);
-            val = val.replaceAll("[\\x00-\\x09\\x0B\\x0C\\x0E-\\x1F\\x7F]", "");
-            JsonNode topicJson;
-            try {
-                JsonNode json = mapper.readTree(val);
-                topicJson = json.get(outputTopicName);
-            } catch (JsonProcessingException e) {
-                LOG.warn("Exception while converting to json: ",e);
-                return null;
-            }
-            ObjectNode objectNode = (ObjectNode) topicJson;
-            objectNode = objectNode.put("mysource", "KSTREAMS");
-            LOG.info("Sending to outputTopicName: {} with Message : {}", outputTopicName, objectNode);
-            return objectNode;
-        });
+    public void streamsConfiguration() {
+        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaStreamsConfigData.getApplicationID());
+        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getBootstrapServers());
+        streamsConfiguration.put(kafkaConfig.getSchemaRegistryUrlKey(), kafkaConfig.getSchemaRegistryUrl());
+        streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     }
 
     @Override
@@ -137,74 +89,68 @@ public class KafkaStreamsRunner implements StreamRunner {
         }
     }
 
-    public void putSerdeConfigs(){
-        serdeConfig.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaConfig.getSchemaRegistryUrl());
-        serdeConfig.put(AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS, true);
-    }
-    public void streamsConfiguration() {
-        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaStreamsConfigData.getApplicationID());
-        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getBootstrapServers());
-        streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        streamsConfiguration.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, "true");
+    public void createTopics(Properties allProps) {
+        AdminClient client = AdminClient.create(allProps);
+
+        List<NewTopic> topics = new ArrayList<>();
+        topics.add(new NewTopic(kafkaStreamsConfigData.getInputTopicName(), 1, (short) 1));
+        for (String outputTopicName : kafkaStreamsConfigData.getOutputTopicNames()) {
+            topics.add(new NewTopic(outputTopicName, 1, (short) 1));
+        }
+        client.createTopics(topics);
+        client.close();
     }
 
-    private ValueMapper<ObjectNode, Subscriber> subscriberValueMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        return (node -> {
-            LOG.info(LOG_TYPE, node);
-            Subscriber subscriberObj = null;
-            try {
-                subscriberObj = mapper.treeToValue(node, Subscriber.class);
-            } catch (JsonProcessingException e) {
-                LOG.warn("Exception while converting to subscriber: ",e);
-            }
-            LOG.info("Sending to outputTopicName: subscriber with Message : {}", subscriberObj);
-            return subscriberObj;
-        });
+    public Topology buildTopology() {
+        final StreamsBuilder builder = new StreamsBuilder();
+        final String inputTopic = kafkaConfig.getTopicName();
+        KStream<String, OutputAvroModel> kStream = builder.stream(inputTopic,
+                Consumed.with(Serdes.String(), outputSerde));
+        kStream.mapValues(val -> {
+            Subscriber subs = val.getSubscriber();
+            subs.setMysource(SOURCE_VALUE_BY_CODE);
+            return subs;
+        }).to(SUBSCRIBER,
+                Produced.with(Serdes.String(), getSubscriberSerde()));
+        kStream.mapValues(val -> {
+            Mycase mycase = val.getMycase();
+            mycase.setMysource(SOURCE_VALUE_BY_CODE);
+            return mycase;
+        }).to(MYCASE, Produced.with(Serdes.String(), getMycaseSerde()));
+        kStream.mapValues(val -> {
+            Patient patient = val.getPatient();
+            patient.setMysource(SOURCE_VALUE_BY_CODE);
+            return patient;
+        }).to(PATIENT, Produced.with(Serdes.String(), getPatientSerde()));
+        kStream.mapValues(val -> {
+            Service service = val.getService();
+            service.setMysource(SOURCE_VALUE_BY_CODE);
+            return service;
+        }).to(SERVICE, Produced.with(Serdes.String(), getServiceSerde()));
+        return builder.build();
     }
 
-    private ValueMapper<ObjectNode, Case> myCaseValueMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        return (node -> {
-            LOG.info(LOG_TYPE, node);
-            Case myCase = null;
-            try {
-                myCase = mapper.treeToValue(node, Case.class);
-            } catch (JsonProcessingException e) {
-                LOG.warn("Exception while converting to myCase: ",e);
-            }
-            LOG.info("Sending to outputTopicName: mycase with Message : {}", myCase);
-            return myCase;
-        });
+    private Serde<Service> getServiceSerde() {
+        Serde<Service> serviceSerde = new SpecificAvroSerde<>();
+        serviceSerde.configure(serdeConfig, false);
+        return serviceSerde;
     }
 
-    private ValueMapper<ObjectNode, Patient> patientValueMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        return (node -> {
-            LOG.info(LOG_TYPE, node);
-            Patient patientObj = null;
-            try {
-                patientObj = mapper.treeToValue(node, Patient.class);
-            } catch (JsonProcessingException e) {
-                LOG.warn("Exception while converting to patient: ",e);
-            }
-            LOG.info("Sending to outputTopicName: patient with Message : {}", patientObj);
-            return patientObj;
-        });
+    private Serde<Patient> getPatientSerde() {
+        Serde<Patient> patientSerde = new SpecificAvroSerde<>();
+        patientSerde.configure(serdeConfig, false);
+        return patientSerde;
     }
 
-    private ValueMapper<ObjectNode, Service> serviceValueMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        return (node -> {
-            LOG.info(LOG_TYPE, node);
-            Service serviceObj = null;
-            try {
-                serviceObj = mapper.treeToValue(node, Service.class);
-            } catch (JsonProcessingException e) {
-                LOG.warn("Exception while converting to service: ",e);
-            }
-            LOG.info("Sending to outputTopicName: service with Message : {}", serviceObj);
-            return serviceObj;
-        });
+    private Serde<Mycase> getMycaseSerde() {
+        Serde<Mycase> caseSerde = new SpecificAvroSerde<>();
+        caseSerde.configure(serdeConfig, false);
+        return caseSerde;
+    }
+
+    private Serde<Subscriber> getSubscriberSerde() {
+        Serde<Subscriber> subscriberSerde = new SpecificAvroSerde<>();
+        subscriberSerde.configure(serdeConfig, false);
+        return subscriberSerde;
     }
 }

@@ -1,9 +1,9 @@
 {
-  "name": "subscriber-jdbc-sink-connector-v1",
+  "name": "service-jdbc-sink-connector-v1",
   "config": {
     "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
-    "topics": "subscriber",
+    "topics": "service",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter": "io.confluent.connect.avro.AvroConverter",
     "key.converter.schema.registry.url": "http://localhost:8081",
@@ -13,7 +13,7 @@
     "connection.password": "Akash@12345",
     "insert.mode": "upsert",
     "batch.size": "2",
-    "table.name.format": "kafkaDemo.subscriber",
+    "table.name.format": "kafkaDemo.service",
     "auto.create": "true",
     "pk.mode": "record_value",
     "pk.fields": "case_NUMBER",

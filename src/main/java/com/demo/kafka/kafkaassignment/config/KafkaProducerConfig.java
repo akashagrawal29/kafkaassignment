@@ -46,7 +46,6 @@ public class KafkaProducerConfig<K extends Serializable, V extends Serializable>
         return new DefaultKafkaProducerFactory<>(producerConfig());
     }
 
-    @Bean("customKafkaTemplate")
     public KafkaTemplate<K, V> kafkaTemplate(){
         return new KafkaTemplate<>(producerFactory());
     }

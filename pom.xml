@@ -23,7 +23,9 @@
 		<jackson-databind.version>2.14.0-rc1</jackson-databind.version>
 		<kafka-streams.version>3.1.2</kafka-streams.version>
 		<kafka-json-schema-serializer.version>7.2.1</kafka-json-schema-serializer.version>
-		<kafka-streams-avro-serde.version>7.2.2</kafka-streams-avro-serde.version>
+		<kafka-streams-avro-serde.version>7.2.1</kafka-streams-avro-serde.version>
+		<avro.version>1.11.0</avro.version>
+		<kafka-avro-serializer.version>7.2.1</kafka-avro-serializer.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -46,13 +48,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 			<version>${spring-boot.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<version>${spring-boot.version}</version>
-			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
@@ -96,16 +91,27 @@
 			<artifactId>kafka-json-schema-serializer</artifactId>
 			<version>${kafka-json-schema-serializer.version}</version>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>io.confluent</groupId>-->
-<!--			<artifactId>kafka-streams-avro-serde</artifactId>-->
-<!--			<version>${kafka-streams-avro-serde.version}</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-streams-avro-serde</artifactId>
+			<version>${kafka-streams-avro-serde.version}</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/io.confluent/kafka-streams-json-schema-serde -->
 		<dependency>
 			<groupId>io.confluent</groupId>
 			<artifactId>kafka-streams-json-schema-serde</artifactId>
 			<version>7.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.avro</groupId>
+			<artifactId>avro</artifactId>
+			<version>${avro.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.confluent/kafka-avro-serializer -->
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-avro-serializer</artifactId>
+			<version>${kafka-avro-serializer.version}</version>
 		</dependency>
 
 	</dependencies>

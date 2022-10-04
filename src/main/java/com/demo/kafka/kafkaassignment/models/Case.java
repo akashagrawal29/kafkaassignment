@@ -1,34 +1,29 @@
 package com.demo.kafka.kafkaassignment.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 
+@Builder
+@AllArgsConstructor
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-@JsonSerializableSchema
+@Entity
+@Table(name = "Mycase")
 public class Case implements Serializable {
-    @JsonProperty("case_NUMBER")
-    String CASE_NUMBER;
-    @JsonProperty("case_TYPE")
-    String CASE_TYPE;
-    @JsonProperty("case_CODE")
-    String CASE_CODE;
-    @JsonProperty("case_START_DATE")
-    String CASE_START_DATE;
-    @JsonProperty("case_END_DATE")
-    String CASE_END_DATE;
-    @JsonProperty("case_AUTH_TYPE")
-    String CASE_AUTH_TYPE;
-    @JsonProperty("case_STATUS")
-    String CASE_STATUS;
-    @JsonProperty("mysource")
-    String MYSOURCE;
+    
+    @Id
+    String case_NUMBER;
+    String case_TYPE;
+    String case_CODE;
+    String case_START_DATE;
+    String case_END_DATE;
+    String case_AUTH_TYPE;
+    String case_STATUS;
+    String mysource;
 }
