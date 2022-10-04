@@ -35,6 +35,9 @@ kafka-producer-config:
   linger-ms: 5
   request-timeout-ms: 60000
 
+kafka-consumer-config:
+  key-deserializer-class: org.apache.kafka.common.serialization.StringDeserializer
+  value-deserializer-class: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
 kafka-streams-config:
   application-id: kafka-demo
   input-topic-name: auth-topic
